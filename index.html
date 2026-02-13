@@ -147,14 +147,13 @@
 </div>
 
 <canvas id="confettiCanvas"></canvas>
-
 <script>
 const noBtn = document.getElementById("noBtn");
 const yesBtn = document.getElementById("yesBtn");
 const mainPage = document.getElementById("mainPage");
 const lovePage = document.getElementById("lovePage");
 
-/* Floating Hearts Generator */
+/* ---------- Floating Hearts ---------- */
 function createHeart() {
     const heart = document.createElement("div");
     heart.classList.add("heart");
@@ -171,36 +170,63 @@ function createHeart() {
 
 setInterval(createHeart, 400);
 
-/* Make No Impossible */
-noBtn.addEventListener("touchstart", moveNo);
-noBtn.addEventListener("mouseover", moveNo);
+/* ---------- Smart No Button (Never leaves screen) ---------- */
 
-function moveNo() {
-    const random = Math.random();
+function moveNoButton(mouseX, mouseY) {
+    const btnRect = noBtn.getBoundingClientRect();
+    const btnWidth = btnRect.width;
+    const btnHeight = btnRect.height;
 
-    if (random < 0.5) {
-        const x = Math.random() * (window.innerWidth - 100);
-        const y = Math.random() * (window.innerHeight - 50);
-        noBtn.style.left = x + "px";
-        noBtn.style.top = y + "px";
-    } else {
-        const rect = noBtn.getBoundingClientRect();
-        yesBtn.style.position = "absolute";
-        yesBtn.style.left = rect.left + "px";
-        yesBtn.style.top = rect.top + "px";
-    }
+    const padding = 20; // keep distance from edges
+    const maxX = window.innerWidth - btnWidth - padding;
+    const maxY = window.innerHeight - btnHeight - padding;
+
+    // Move away from pointer
+    let newX = btnRect.left + (btnRect.left - mouseX);
+    let newY = btnRect.top + (btnRect.top - mouseY);
+
+    // Clamp within screen
+    newX = Math.max(padding, Math.min(newX, maxX));
+    newY = Math.max(padding, Math.min(newY, maxY));
+
+    noBtn.style.left = newX + "px";
+    noBtn.style.top = newY + "px";
 }
 
-/* Confetti */
+// Desktop
+document.addEventListener("mousemove", (e) => {
+    const rect = noBtn.getBoundingClientRect();
+    const distance = Math.hypot(
+        e.clientX - rect.left,
+        e.clientY - rect.top
+    );
+
+    if (distance < 100) {
+        moveNoButton(e.clientX, e.clientY);
+    }
+});
+
+// Mobile
+noBtn.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    moveNoButton(touch.clientX, touch.clientY);
+});
+
+/* ---------- Confetti ---------- */
 const canvas = document.getElementById("confettiCanvas");
 const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
 
 let confetti = [];
 
 function createConfetti() {
-    for (let i = 0; i < 180; i++) {
+    for (let i = 0; i < 200; i++) {
         confetti.push({
             x: window.innerWidth / 2,
             y: window.innerHeight / 2,
@@ -214,14 +240,20 @@ function createConfetti() {
 
 function drawConfetti() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     confetti.forEach((c, index) => {
         c.x += c.speedX;
         c.y += c.speedY;
         c.speedY += 0.3;
+
         ctx.fillStyle = c.color;
         ctx.fillRect(c.x, c.y, c.size, c.size);
-        if (c.y > canvas.height) confetti.splice(index, 1);
+
+        if (c.y > canvas.height) {
+            confetti.splice(index, 1);
+        }
     });
+
     requestAnimationFrame(drawConfetti);
 }
 
@@ -235,6 +267,7 @@ yesBtn.addEventListener("click", () => {
     }, 900);
 });
 </script>
+
 
 </body>
 </html>
