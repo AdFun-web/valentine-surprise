@@ -196,8 +196,10 @@ function moveNo(pointerX, pointerY) {
     if (maxY < minY) maxY = minY;
 
     // Choose random safe position
-    const newX = minX + Math.random() * (maxX - minX);
-    const newY = minY + Math.random() * (maxY - minY);
+    // const newX = minX + Math.random() * (maxX - minX);
+    // const newY = minY + Math.random() * (maxY - minY);
+    const newX = maxX;
+    const newY = maxY;
 
     noBtn.style.left = newX + "px";
     noBtn.style.top = newY + "px";
