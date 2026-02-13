@@ -147,11 +147,25 @@
 </div>
 
 <canvas id="confettiCanvas"></canvas>
+
 <script>
 const noBtn = document.getElementById("noBtn");
 const yesBtn = document.getElementById("yesBtn");
 const mainPage = document.getElementById("mainPage");
 const lovePage = document.getElementById("lovePage");
+
+/* ---------- Convert CM to PX Dynamically ---------- */
+function cmToPx(cm) {
+    const div = document.createElement("div");
+    div.style.width = cm + "cm";
+    div.style.position = "absolute";
+    document.body.appendChild(div);
+    const pixels = div.offsetWidth;
+    document.body.removeChild(div);
+    return pixels;
+}
+
+const AREA_SIZE = cmToPx(5); // 5cm square
 
 /* ---------- Floating Hearts ---------- */
 function createHeart() {
@@ -163,37 +177,45 @@ function createHeart() {
     heart.style.fontSize = (15 + Math.random() * 25) + "px";
     document.body.appendChild(heart);
 
-    setTimeout(() => {
-        heart.remove();
-    }, 8000);
+    setTimeout(() => heart.remove(), 8000);
 }
-
 setInterval(createHeart, 400);
 
-/* ---------- Smart No Button (Never leaves screen) ---------- */
+/* ---------- Controlled No Button Movement ---------- */
 
-function moveNoButton(mouseX, mouseY) {
+function moveNoButton(pointerX, pointerY) {
+
     const btnRect = noBtn.getBoundingClientRect();
     const btnWidth = btnRect.width;
     const btnHeight = btnRect.height;
 
-    const padding = 20; // keep distance from edges
-    const maxX = window.innerWidth - btnWidth - padding;
-    const maxY = window.innerHeight - btnHeight - padding;
+    // Define 5cm x 5cm square centered at pointer
+    const half = AREA_SIZE / 2;
 
-    // Move away from pointer
-    let newX = btnRect.left + (btnRect.left - mouseX);
-    let newY = btnRect.top + (btnRect.top - mouseY);
+    let minX = pointerX - half;
+    let maxX = pointerX + half - btnWidth;
+    let minY = pointerY - half;
+    let maxY = pointerY + half - btnHeight;
 
-    // Clamp within screen
-    newX = Math.max(padding, Math.min(newX, maxX));
-    newY = Math.max(padding, Math.min(newY, maxY));
+    // Clamp square inside viewport
+    minX = Math.max(0, minX);
+    minY = Math.max(0, minY);
+    maxX = Math.min(window.innerWidth - btnWidth, maxX);
+    maxY = Math.min(window.innerHeight - btnHeight, maxY);
+
+    // If bounds inverted (edge case near corners)
+    if (maxX < minX) maxX = minX;
+    if (maxY < minY) maxY = minY;
+
+    // Pick random position inside allowed square
+    const newX = minX + Math.random() * (maxX - minX);
+    const newY = minY + Math.random() * (maxY - minY);
 
     noBtn.style.left = newX + "px";
     noBtn.style.top = newY + "px";
 }
 
-// Desktop
+/* Desktop */
 document.addEventListener("mousemove", (e) => {
     const rect = noBtn.getBoundingClientRect();
     const distance = Math.hypot(
@@ -201,13 +223,13 @@ document.addEventListener("mousemove", (e) => {
         e.clientY - rect.top
     );
 
-    if (distance < 100) {
+    if (distance < 120) {
         moveNoButton(e.clientX, e.clientY);
     }
 });
 
-// Mobile
-noBtn.addEventListener("touchstart", (e) => {
+/* Mobile */
+document.addEventListener("touchmove", (e) => {
     const touch = e.touches[0];
     moveNoButton(touch.clientX, touch.clientY);
 });
@@ -267,6 +289,8 @@ yesBtn.addEventListener("click", () => {
     }, 900);
 });
 </script>
+
+
 
 
 </body>
