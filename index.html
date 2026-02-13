@@ -147,67 +147,55 @@
 </div>
 
 <canvas id="confettiCanvas"></canvas>
-
 <script>
 const noBtn = document.getElementById("noBtn");
 const yesBtn = document.getElementById("yesBtn");
 const mainPage = document.getElementById("mainPage");
 const lovePage = document.getElementById("lovePage");
 
-/* ---------- Convert CM to PX Dynamically ---------- */
+/* ---------- Force No Button to Use Viewport Coordinates ---------- */
+noBtn.style.position = "fixed";
+noBtn.style.left = "60%";
+noBtn.style.top = "55%";
+
+/* ---------- Accurate cm → px ---------- */
 function cmToPx(cm) {
     const div = document.createElement("div");
     div.style.width = cm + "cm";
     div.style.position = "absolute";
+    div.style.visibility = "hidden";
     document.body.appendChild(div);
-    const pixels = div.offsetWidth;
+    const px = div.offsetWidth;
     document.body.removeChild(div);
-    return pixels;
+    return px;
 }
 
-const AREA_SIZE = cmToPx(5); // 5cm square
+const AREA = cmToPx(5); // 5cm square
+const HALF = AREA / 2;
 
-/* ---------- Floating Hearts ---------- */
-function createHeart() {
-    const heart = document.createElement("div");
-    heart.classList.add("heart");
-    heart.innerHTML = "❤";
-    heart.style.left = Math.random() * 100 + "vw";
-    heart.style.animationDuration = (4 + Math.random() * 4) + "s";
-    heart.style.fontSize = (15 + Math.random() * 25) + "px";
-    document.body.appendChild(heart);
+/* ---------- Safe Movement Function ---------- */
+function moveNo(pointerX, pointerY) {
 
-    setTimeout(() => heart.remove(), 8000);
-}
-setInterval(createHeart, 400);
+    const btnWidth = noBtn.offsetWidth;
+    const btnHeight = noBtn.offsetHeight;
 
-/* ---------- Controlled No Button Movement ---------- */
+    // Define allowed square around pointer
+    let minX = pointerX - HALF;
+    let maxX = pointerX + HALF - btnWidth;
+    let minY = pointerY - HALF;
+    let maxY = pointerY + HALF - btnHeight;
 
-function moveNoButton(pointerX, pointerY) {
-
-    const btnRect = noBtn.getBoundingClientRect();
-    const btnWidth = btnRect.width;
-    const btnHeight = btnRect.height;
-
-    // Define 5cm x 5cm square centered at pointer
-    const half = AREA_SIZE / 2;
-
-    let minX = pointerX - half;
-    let maxX = pointerX + half - btnWidth;
-    let minY = pointerY - half;
-    let maxY = pointerY + half - btnHeight;
-
-    // Clamp square inside viewport
+    // Strict clamp to viewport
     minX = Math.max(0, minX);
     minY = Math.max(0, minY);
     maxX = Math.min(window.innerWidth - btnWidth, maxX);
     maxY = Math.min(window.innerHeight - btnHeight, maxY);
 
-    // If bounds inverted (edge case near corners)
+    // Handle edge compression near borders
     if (maxX < minX) maxX = minX;
     if (maxY < minY) maxY = minY;
 
-    // Pick random position inside allowed square
+    // Choose random safe position
     const newX = minX + Math.random() * (maxX - minX);
     const newY = minY + Math.random() * (maxY - minY);
 
@@ -215,23 +203,39 @@ function moveNoButton(pointerX, pointerY) {
     noBtn.style.top = newY + "px";
 }
 
-/* Desktop */
+/* ---------- Desktop ---------- */
 document.addEventListener("mousemove", (e) => {
     const rect = noBtn.getBoundingClientRect();
+
     const distance = Math.hypot(
-        e.clientX - rect.left,
-        e.clientY - rect.top
+        e.clientX - (rect.left + rect.width / 2),
+        e.clientY - (rect.top + rect.height / 2)
     );
 
     if (distance < 120) {
-        moveNoButton(e.clientX, e.clientY);
+        moveNo(e.clientX, e.clientY);
     }
 });
 
-/* Mobile */
+/* ---------- Mobile ---------- */
 document.addEventListener("touchmove", (e) => {
     const touch = e.touches[0];
-    moveNoButton(touch.clientX, touch.clientY);
+    moveNo(touch.clientX, touch.clientY);
+});
+
+/* ---------- Resize Safety ---------- */
+window.addEventListener("resize", () => {
+    const btnWidth = noBtn.offsetWidth;
+    const btnHeight = noBtn.offsetHeight;
+
+    let x = parseFloat(noBtn.style.left);
+    let y = parseFloat(noBtn.style.top);
+
+    x = Math.min(x, window.innerWidth - btnWidth);
+    y = Math.min(y, window.innerHeight - btnHeight);
+
+    noBtn.style.left = Math.max(0, x) + "px";
+    noBtn.style.top = Math.max(0, y) + "px";
 });
 
 /* ---------- Confetti ---------- */
@@ -289,7 +293,6 @@ yesBtn.addEventListener("click", () => {
     }, 900);
 });
 </script>
-
 
 
 
