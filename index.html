@@ -203,6 +203,22 @@ function moveNo(pointerX, pointerY) {
 
     noBtn.style.left = newX + "px";
     noBtn.style.top = newY + "px";
+    checkEdgeAndReset();
+}
+
+
+/* ---------- Edge Detection ---------- */
+function checkEdgeAndReset() {
+    const rect = noBtn.getBoundingClientRect();
+
+    const atLeft = rect.left <= 0;
+    const atRight = rect.right >= window.innerWidth;
+    const atTop = rect.top <= 0;
+    const atBottom = rect.bottom >= window.innerHeight;
+
+    if (atLeft || atRight || atTop || atBottom) {
+        centerNoButton();
+    }
 }
 
 /* ---------- Desktop ---------- */
